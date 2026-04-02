@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specifics
+master_temp/
+incoming/
+.nas_manifest.json
+takeout_migration.log
+archive_report_*.txt
+*.extracted

@@ -1,0 +1,39 @@
+# GoogleTakeoutToLongviewstorage — Python dependencies
+#
+# Install with:
+#   pip install -r requirements.txt
+#
+# ExifTool (native binary) must also be installed separately:
+#   macOS:  brew install exiftool
+#   Linux:  sudo apt install libimage-exiftool-perl
+#
+# rclone (for --rclone-remote mode):
+#   macOS:  brew install rclone
+#   Linux:  sudo apt install rclone   OR   https://rclone.org/install/
+
+# --- Core dependencies ------------------------------------------------------
+
+# Progress bars
+tqdm>=4.66.0
+
+# ExifTool Python wrapper (talks to the persistent exiftool process)
+pyexiftool>=0.5.6
+
+# --- Standard library modules used (no install needed) ----------------------
+# argparse   (stdlib)
+# hashlib    (stdlib)
+# json       (stdlib)
+# logging    (stdlib)
+# pathlib    (stdlib)
+# re         (stdlib)
+# shutil     (stdlib)
+# subprocess (stdlib)
+# zipfile    (stdlib)
+# concurrent.futures (stdlib)
+# dataclasses (stdlib, Python 3.10+)
+
+# --- Optional / development -------------------------------------------------
+
+# Linting & formatting (not required at runtime)
+# ruff>=0.4.0
+# mypy>=1.10.0
