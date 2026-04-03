@@ -294,6 +294,14 @@ def organise(
             record = _move_with_ref(result, dest, dry_run)
             report.moved.append(record)
 
+    # Cleanup skipped duplicates from the staging folder so they don't block auto-deletion
+    if not dry_run and report.skipped:
+        for skip_res in report.skipped:
+            try:
+                skip_res.path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
     # Summary
     status_counts: dict[str, int] = {}
     for rec in report.moved:

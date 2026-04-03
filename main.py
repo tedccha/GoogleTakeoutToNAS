@@ -257,8 +257,10 @@ def _report_path(args: argparse.Namespace) -> Path:
     """Return the destination path for the archive report file."""
     if args.report_out:
         return args.report_out
+    reports_dir = Path(__file__).parent / "TakeouttoNAS"
+    reports_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    return args.work_dir / f"archive_report_{ts}.txt"
+    return reports_dir / f"archive_report_{ts}.txt"
 
 
 # ---------------------------------------------------------------------------
@@ -270,7 +272,9 @@ def main() -> int:
     args   = parser.parse_args()
 
     # Set up logging before anything else
-    setup_logging(args.work_dir, verbose=args.verbose)
+    logs_dir = Path(__file__).parent / "TakeouttoNAS" / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    setup_logging(logs_dir, verbose=args.verbose)
     log.info("=" * 60)
     log.info("GoogleTakeoutToLongviewstorage starting")
     log.info("  work-dir : %s", args.work_dir)
@@ -352,9 +356,15 @@ def main() -> int:
             log.info("Cleaning up master_temp: %s", master_temp)
             try:
                 _shutil.rmtree(master_temp)
-                log.info("master_temp removed.")
+                log.info("master_temp completely removed.")
+                
+                # Check if the outer work-dir is now fundamentally empty, 
+                # to delete it cleanly off the user's desktop
+                if args.work_dir.exists() and not list(args.work_dir.iterdir()):
+                    args.work_dir.rmdir()
+                    log.info("Temporary working directory was empty and has been removed.")
             except OSError as e:
-                log.warning("Could not remove master_temp: %s", e)
+                log.warning("Could not completely remove working folders: %s", e)
     elif args.keep_temp:
         log.info("--keep-temp: master_temp preserved at %s", master_temp)
 

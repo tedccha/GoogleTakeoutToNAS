@@ -107,3 +107,13 @@ To circumvent your Mac sleeping and dropping the NAS mount mid-transfer, either 
 
 **macOS permission errors on `/Volumes/`**
 Go to **System Settings → Privacy & Security → Full Disk Access** and explicitly add your Terminal desktop app to it so it can traverse networked filesystems freely.
+
+---
+
+## Workspace & Receipts
+
+When you run the script, you specify a `--work-dir` (e.g. `~/Desktop/takeout_work`) to act as a temporary playground. 
+
+**Auto-Cleaning Workspace**: Once your extraction is 100% migrated to your NAS, the script mathematically verifies your remaining local duplicates, safely unlinks them, and entirely disintegrates the `takeout_work` folder so it doesn't take up space in your life.
+
+**Permanent Receipts**: Every time you completely run the engine, it will generate a permanent receipt of everything it processed, deduplicated, and analyzed (identifying time-span gaps). These are saved completely out of harms way inside your codebase folder under `TakeouttoNAS/`.
