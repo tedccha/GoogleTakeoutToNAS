@@ -19,6 +19,7 @@ Public API
 """
 
 import logging
+import os
 import re
 import shutil
 from dataclasses import dataclass, field
@@ -194,7 +195,10 @@ def _verified_move(src: Path, dest: Path, dry_run: bool) -> MoveRecord:
     dest = _unique_dest(dest)
 
     try:
-        shutil.copy2(src, dest)
+        # Avoid shutil.copy2() to bypass xattr transfer errors on SMB (Errno 22)
+        shutil.copy(src, dest)
+        st = src.stat()
+        os.utime(dest, (st.st_atime, st.st_mtime))
     except OSError as e:
         log.error("Copy failed %s → %s: %s", src, dest, e)
         return MoveRecord(src=src, dest=dest, status="error", error=str(e))

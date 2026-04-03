@@ -13,86 +13,97 @@ This tool intelligently reconstructs your exact library from the ground up, fixi
 - **Sidecar Re-Injection**: Parses Google's disconnected `.json` sidecars to discover the original `"photoTakenTime"` and GPS coordinates, injecting them strictly and safely back into the EXIF/QuickTime headers of your `.jpg`, `.heic`, and `.mp4` files using a multi-threaded ExifTool pool. 
 - **Smart Deduplication**: Aggressively scans your NAS destination and builds a highly efficient `{size: hash}` manifest chunk. If you re-run an ingestion later, it knows *exactly* which files have already been pushed, saving you gigabytes of redundant transfers.
 - **Auto-Unzipping & Folder Merging**: Safely and recursively extracts every `.zip` archive you get from Takeout, brilliantly stitching together collision folders without skipping healthy files.
-- **Curated Filtering**: Uses Regex sanitization to handle Google's duplicate file tags (e.g., `(1).jpg`) and intelligently prefers `-edited` image variants over raw originals so your final library represents your active, edited Google Photos space.
 - **Pristine Library Structure**: Automatically evaluates the true UTC dates and moves your media to an elegant, tidy `{NAS_ROOT}/YYYY/MM/final_image.jpg` hierarchy.
+- **NAS SMB Safe-Copying**: Bypasses classic macOS `shutil.copy2` extended attribute bugs (Errno 22) during network transfers, manually preserving `mtime` strictly via safe `os.utime()` injections.
 - **rclone Support**: If your Takeout exports were sent directly to Google Drive, this script can use `rclone` to automatically stream the download chunks locally.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### 1. Installation
 
-You need a few system-level dependencies for the script to analyze and inject headers natively:
-
-1. **Python 3.8+**
-2. **ExifTool**: Ensure this is installed on your system PATH.
-   - **macOS**: `brew install exiftool`
-   - **Linux**: `sudo apt install libimage-exiftool-perl`
-3. **rclone** *(Optional, but required if you want to pull zips directly from a remote like Google Drive)*:
-   - **macOS**: `brew install rclone`
-   - Then run `rclone config` to link your remote.
-
-### Installation
-
-Clone the repository and install the Python wrappers required:
+Clone the repository and let the friendly onboarding wizard configure your environment!
 
 ```bash
 git clone https://github.com/yourusername/GoogleTakeoutToLongviewstorage.git
 cd GoogleTakeoutToLongviewstorage
-pip install -r requirements.txt
+python3 setup.py
 ```
+
+The interactive `setup.py` wizard will completely automate your deployment:
+1. **Dependency Check**: It will verify you have ExifTool installed (and tell you exactly how to get it if you don't).
+2. **Package Install**: It will automatically install the required Python wrappers (`pyexiftool`, `tqdm`).
+3. **Environment Interview**: It will cleanly prompt you for your Local and NAS filesystem paths.
+4. **Pre-Flight Check**: It will actively verify read/write connections to your drives before you start.
+5. **Launcher Generation**: It will generate a localized `go.sh` (Mac/Linux) or `go.bat` (Windows) file that completely abstracts away the complex command-line arguments.
+
+*(Note: If you plan to pull archives using `rclone` instead of local downloads, ensure it is installed on your OS as well).*
 
 ---
 
-## How it Works / Usage
+## 2. Running your Migration
 
-The pipeline executes through a rigid, safe sequence: **Ingestion -> Manifest -> Metadata Processing -> Organization -> Reporter**. 
+If you passed the `setup.py` wizard successfully, all you have to do is run your personalized helper file.
 
-It builds a temporary staging space (`master_temp`) where all unzipping and staging occurs before issuing an atomic `shutil.copy2` to your NAS. Your existing NAS files are never unexpectedly overwritten.
-
-### 1. Local Downloads (Standard Usage)
-If you've manually downloaded the Google Takeout `.zip` files to your computer, point the script at that folder:
+*(Pro-Tip for macOS users: Long network transfers drop if your laptop falls asleep. Prefix your command with `caffeinate -i` to force the screen to stay awake).*
 
 ```bash
-python main.py \
-    --source ~/Downloads/Takeout \
-    --work-dir ~/Desktop/takeout_staging \
-    --nas /Volumes/photo \
-    --rebuild-manifest
+caffeinate -i ./go.sh
 ```
-*(Note: `--rebuild-manifest` forces the system to scan your NAS folder completely the first time. For subsequent runs weeks later, you can drop this flag so it utilizes the fast, cached index).*
+*(Windows users should just run `go.bat`)*
 
-### 2. Auto-Pull from Google Drive via rclone
-If you routed your Takeout dumps directly to Google Drive, skip downloading manually.
+### Resuming after an interruption
+If the migration is interrupted (crash, laptop shuts, SMB timeout, etc.), **don't start over**. Resume exactly from where it left off! 
+Just edit your `go.sh` script or run the raw terminal command with these flags:
 
 ```bash
-python main.py \
-    --rclone-remote "gdrive:Takeout" \
-    --work-dir ~/Desktop/takeout_staging \
-    --nas /Volumes/photo
+caffeinate -i python3 main.py \
+  --source ~/Downloads/GoogleTakeout \
+  --work-dir ~/Desktop/takeout_work \
+  --nas /Volumes/photo \
+  --skip-ingest \
+  --rebuild-manifest
 ```
-
-### 3. Dry-Run (Test Execution)
-Evaluate how many files are new vs duplicates, but don't transfer anything or touch your NAS.
-
-```bash
-python main.py \
-    --source ~/Downloads/Takeout \
-    --work-dir ~/Desktop/takeout_staging \
-    --nas /Volumes/photo \
-    --dry-run
-```
+- `--skip-ingest` safely tells it not to re-unzip your huge folders since `master_temp` still holds them.
+- `--rebuild-manifest` re-scans the NAS so it acknowledges already-copied files as duplicates and safely ignores them!
 
 ---
 
-## Configuration Details
+## CLI Reference & Configuration
 
-You can modify internal logic via the lightweight `config.py` file:
-- **`MAX_WORKERS`**: Defaults to 4. Controls how many threads are actively writing EXIF tags. If you have an M-series Mac or robust Linux desktop, you can raise this value to heavily speed up injection. 
-- **`MEDIA_EXTENSIONS`**: Contains exactly what formats are ingested (`.jpeg`, `.dng`, `.heic`, `.mkv`, etc). 
-- **`EDITED_SUFFIXES`**: Custom suffix tags that flag a photo as an edited priority (defaults to `["-edited", "-效果图"]`).
+If you want to manually run the engine without the `go` scripts, this is available:
 
-## Important Notes on macOS Paths
+```bash
+python3 main.py --source ~/Downloads/Takeout --work-dir ~/Desktop/temp --nas /Volumes/photo
+```
 
-If your NAS is mapped natively via macOS SMB/AFP, it will usually sit at `/Volumes/[DriveName]`. Ensure you grant **Full Disk Access** to your Terminal application (System Settings -> Privacy & Security -> Full Disk Access) so the script can smoothly read file sizes and orchestrate folder placements on the remote drive!
+| Flag | Description |
+|---|---|
+| `--source DIR` | Local folder containing Takeout `.zip` files |
+| `--rclone-remote REMOTE:PATH` | Pull from Google Drive via rclone instead (e.g. `gdrive:Takeout`) |
+| `--work-dir DIR` | Temporary scratch space for unzipping (required) |
+| `--nas DIR` | NAS destination root, e.g. `/Volumes/photo` (required) |
+| `--dry-run` | Simulate everything without copying files to NAS |
+| `--skip-ingest` | Skip unzipping — use existing staging folder |
+| `--skip-metadata` | Skip ExifTool EXIF injection |
+| `--rebuild-manifest` | Force full re-scan of NAS (use when resuming) |
+| `--skip-manifest` | Disable deduplication entirely (not recommended) |
+
+### `config.py` Properties
+You can natively adjust the behavior using `config.py`. 
+- **`MAX_WORKERS`**: Defaults to 4. Tune this higher to heavily speed up the multi-threaded ExifTool injection if you have a powerful multicore CPU.
+- **`EDITED_SUFFIXES`**: Custom tags (like `["-edited"]`) that instruct the pipeline to favor edited files over raw original duplicates.
+
+---
+
+## Troubleshooting
+
+**`execute returned a non-zero exit status: 1`**
+If ExifTool spits out errors on certain files (like older `.avi` files, or odd `.png` screenshots), don't panic! Some files structurally cannot accept EXIF tags. The library Organizer logic has been heavily fortified to safely catch these errors, log them, and still migrate the files cleanly to the NAS using sidecar metadata dates instead!
+
+**SMB Drops / Notebook Sleeping**
+To circumvent your Mac sleeping and dropping the NAS mount mid-transfer, either run using `caffeinate -i ./go.sh`, or use a tool like Amphetamine to keep your Mac awake!
+
+**macOS permission errors on `/Volumes/`**
+Go to **System Settings → Privacy & Security → Full Disk Access** and explicitly add your Terminal desktop app to it so it can traverse networked filesystems freely.

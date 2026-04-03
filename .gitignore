@@ -17,3 +17,5 @@ incoming/
 takeout_migration.log
 archive_report_*.txt
 *.extracted
+go.sh
+go.bat
