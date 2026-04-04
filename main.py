@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GoogleTakeoutToLongviewstorage
+GoogleTakeoutToNAS
 ==============================
 Automates the migration of a Google Photos library (exported via Google
 Takeout) to a Synology NAS, with metadata injection, deduplication, and
@@ -61,7 +61,7 @@ log = logging.getLogger(__name__)
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="GoogleTakeoutToLongviewstorage",
+        prog="GoogleTakeoutToNAS",
         description=(
             "Migrate Google Takeout photos/videos to a Synology NAS with "
             "metadata injection, deduplication, and Year/Month organisation."
@@ -276,7 +276,7 @@ def main() -> int:
     logs_dir.mkdir(parents=True, exist_ok=True)
     setup_logging(logs_dir, verbose=args.verbose)
     log.info("=" * 60)
-    log.info("GoogleTakeoutToLongviewstorage starting")
+    log.info("GoogleTakeoutToNAS starting")
     log.info("  work-dir : %s", args.work_dir)
     log.info("  NAS root : %s", args.nas)
     log.info("  dry-run  : %s", args.dry_run)

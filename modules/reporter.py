@@ -273,7 +273,7 @@ def build_report(
     # ════════════════════════════════════════════════════════════════════════
     # Header
     # ════════════════════════════════════════════════════════════════════════
-    h1("GoogleTakeoutToLongviewstorage — Archive Migration Report")
+    h1("GoogleTakeoutToNAS — Archive Migration Report")
     lines.append("")
     row("Report generated",    _fmt_ts(run_meta.started_at))
     row("Migration duration",  _fmt_duration(run_meta.elapsed_sec))

@@ -1,5 +1,5 @@
 """
-config.py - Central configuration constants for GoogleTakeoutToLongviewstorage.
+config.py - Central configuration constants for GoogleTakeoutToNAS.
 
 All tuneable parameters live here so nothing is magic-numbered throughout the codebase.
 """

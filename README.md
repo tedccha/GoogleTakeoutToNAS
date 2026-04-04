@@ -1,4 +1,4 @@
-# GoogleTakeoutToLongviewstorage
+# GoogleTakeoutToNAS
 
 Automate the complex, tedious process of migrating a massive Google Photos library (exported via Google Takeout) to a Synology NAS (or any standard local/network storage). 
 
@@ -26,8 +26,8 @@ This tool intelligently reconstructs your exact library from the ground up, fixi
 Clone the repository and let the friendly onboarding wizard configure your environment!
 
 ```bash
-git clone https://github.com/yourusername/GoogleTakeoutToLongviewstorage.git
-cd GoogleTakeoutToLongviewstorage
+git clone https://github.com/yourusername/GoogleTakeoutToNAS.git
+cd GoogleTakeoutToNAS
 python3 setup.py
 ```
 

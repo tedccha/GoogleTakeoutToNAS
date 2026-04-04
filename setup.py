@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup.py - GoogleTakeoutToLongviewstorage Onboarding Wizard
+setup.py - GoogleTakeoutToNAS Onboarding Wizard
 ------------------------------------------------------------
 A friendly wizard to help new users:
 1. Verify ExifTool is installed.
