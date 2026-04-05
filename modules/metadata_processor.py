@@ -116,10 +116,35 @@ def _find_sidecar(media_path: Path) -> Optional[Path]:
 
 
 # ---------------------------------------------------------------------------
-# JSON parsing
+# JSON parsing & Heuristics
 # ---------------------------------------------------------------------------
 
 _EDITED_RE = re.compile(r"(-edited|-效果|-效果图)(\.\w+)?$", re.IGNORECASE)
+
+_DATE_GUESS_REGEXES = [
+    # YYYY_MM_DD_HH_MM_SS like 2016_01_30_11_49_15.mp4
+    re.compile(r"(?P<Y>20\d{2}|19\d{2})[-_](?P<M>0[1-9]|1[0-2])[-_](?P<D>0[1-9]|[12]\d|3[01])[-_](?P<H>[01]\d|2[0-3])[-_]?(?P<Min>[0-5]\d)[-_]?(?P<S>[0-5]\d)"),
+    # YYYYMMDD_HHMMSS like IMG_20190919_053857.jpg
+    re.compile(r"(?P<Y>20\d{2}|19\d{2})(?P<M>0[1-9]|1[0-2])(?P<D>0[1-9]|[12]\d|3[01])[_-]?(?P<H>[01]\d|2[0-3])(?P<Min>[0-5]\d)(?P<S>[0-5]\d)"),
+    # YYYYMMDD with no time
+    re.compile(r"(?P<Y>20\d{2}|19\d{2})(?P<M>0[1-9]|1[0-2])(?P<D>0[1-9]|[12]\d|3[01])(?!\d)"),
+]
+
+def _guess_date_from_filename(filename: str) -> Optional[datetime]:
+    """Fallback date extraction purely using Regex on the filename."""
+    for pattern in _DATE_GUESS_REGEXES:
+        match = pattern.search(filename)
+        if match:
+            gd = match.groupdict()
+            try:
+                y, m, d = int(gd["Y"]), int(gd["M"]), int(gd["D"])
+                H = int(gd.get("H") or 0)
+                Min = int(gd.get("Min") or 0)
+                S = int(gd.get("S") or 0)
+                return datetime(y, m, d, H, Min, S, tzinfo=timezone.utc)
+            except ValueError:
+                continue
+    return None
 
 
 def _parse_sidecar(json_path: Path) -> Optional[MediaMetadata]:
@@ -168,6 +193,13 @@ def _parse_sidecar(json_path: Path) -> Optional[MediaMetadata]:
                     meta.date_taken = datetime.fromtimestamp(ts, tz=timezone.utc)
             except (ValueError, OSError):
                 pass
+                
+    # --- Filename Heuristic Fallback ----------------------------------------
+    if meta.date_taken is None:
+        guessed_dt = _guess_date_from_filename(json_path.name.replace(".json", ""))
+        if guessed_dt:
+            log.debug("No JSON date found; salvaged date from filename for %s", json_path.name)
+            meta.date_taken = guessed_dt
 
     # --- GPS ----------------------------------------------------------------
     for geo_key in ("geoDataExif", "geoData"):
@@ -274,7 +306,20 @@ def process_file(
     sidecar = _find_sidecar(media_path)
     if sidecar is None:
         log.info("No sidecar found: %s", media_path.name)
-        # Still proceed – the file might have embedded EXIF already
+        
+        # HEURISTIC FALLBACK: Try grabbing the date from the title itself
+        guessed_dt = _guess_date_from_filename(media_path.name)
+        if guessed_dt:
+            meta = MediaMetadata(date_taken=guessed_dt, title=media_path.name, is_edited=bool(_EDITED_RE.search(media_path.name)))
+            log.info("Salvaged perfectly usable date purely from filename for %s", media_path.name)
+            try:
+                _write_exif(media_path, meta, et)
+                return ProcessResult(path=media_path, status="processed", md5=digest, metadata=meta)
+            except Exception as e:
+                log.warning("ExifTool failed for salvaged file %s: %s", media_path, e)
+                return ProcessResult(path=media_path, status="exif_error", md5=digest, metadata=meta, error=str(e))
+                
+        # Still proceed – the file might just have its own embedded EXIF already
         return ProcessResult(path=media_path, status="no_sidecar", md5=digest)
 
     # --- Sidecar parsing ----------------------------------------------------
