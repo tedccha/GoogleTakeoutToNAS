@@ -284,6 +284,7 @@ def main() -> int:
 
     _validate_args(args)
     t0 = time.perf_counter()
+    start_dt = datetime.now(timezone.utc)
 
     # -----------------------------------------------------------------------
     # Phase 1 – Ingestion
@@ -375,7 +376,7 @@ def main() -> int:
     log.info("▶ Phase 6: Generating archive report")
 
     run_meta = RunMeta(
-        started_at    = datetime.fromtimestamp(t0, tz=timezone.utc),
+        started_at    = start_dt,
         elapsed_sec   = elapsed,
         source        = args.source,
         rclone_remote = getattr(args, "rclone_remote", None),
