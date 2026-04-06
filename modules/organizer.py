@@ -246,7 +246,7 @@ def organise(
     Parameters
     ----------
     results       : output from metadata_processor.process_all()
-    nas_root      : mount point / root of the Synology photo library
+    nas_root      : mount point / root of the target NAS or photo library
     dry_run       : if True, log what *would* happen without touching the NAS
     show_progress : show tqdm bar
 

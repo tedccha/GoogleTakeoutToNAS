@@ -423,7 +423,7 @@ def build_report(
     if no_sidecar:
         h1(f"FILES MOVED WITHOUT METADATA SIDECAR  ({len(no_sidecar):,})")
         lines.append("  These files were archived but EXIF date/GPS could not be injected.")
-        lines.append("  They will appear undated in Synology Photos until manually tagged.")
+        lines.append("  They will appear undated in the target library until manually tagged.")
         lines.append("")
         for pr in sorted(no_sidecar, key=lambda r: r.path.name):
             lines.append(f"    • {pr.path.name}")
@@ -462,11 +462,11 @@ def build_report(
     lines.append("  Steps to reconcile:")
     lines.append("   1. Open Google Photos → Library → check total item count.")
     lines.append(f"      Expected:  ≥ {total_media:,}  (Takeout may exclude shared/hidden albums)")
-    lines.append("   2. In Synology Photos, verify the folder count under each year")
+    lines.append("   2. In your target library, verify the folder count under each year")
     lines.append("      matches the Month counts above.")
     lines.append("   3. Spot-check 3–5 months from the gap list above in Google Photos")
     lines.append("      to confirm those months genuinely had no photos.")
-    lines.append("   4. Search Synology Photos for photos with no date — these are")
+    lines.append("   4. Search your library for photos with no date — these are")
     lines.append(f"      the {total_no_side:,} file(s) listed in the 'No Sidecar' section.")
     lines.append("   5. If counts diverge significantly, re-run with --rebuild-manifest")
     lines.append("      and compare the new report.")

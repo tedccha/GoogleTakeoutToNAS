@@ -1,19 +1,19 @@
 # GoogleTakeoutToNAS
 
-Automate the complex, tedious process of migrating a massive Google Photos library (exported via Google Takeout) to a Synology NAS (or any standard local/network storage). 
+Automate the process of migrating a large Google Photos library (exported via Google Takeout) to a NAS (e.g., Synology, QNAP, TrueNAS), local drive, or other network storage.
 
-Google Takeout is notoriously messy: it strips essential EXIF metadata (dates, GPS) from your media, strands it in separate `.json` sidecar files, arbitrarily splits files into 50GB `.zip` folders, and leaves you to figure out deduplication. 
+Google Takeout exports can be messy: it strips essential EXIF metadata (dates, GPS) from your media, separates it into `.json` sidecar files, arbitrarily splits files into 50GB `.zip` folders, and leaves you to handle deduplication.
 
-This tool intelligently reconstructs your exact library from the ground up, fixing metadata, deduplicating exactly, and exporting to a clean, highly browsable folder schema.
+This tool reconstructs your library by fixing metadata, handling deduplication, and exporting to a clean, browsable folder structure.
 
 ---
 
 ## Key Features
 
-- **Sidecar Re-Injection**: Parses Google's disconnected `.json` sidecars to discover the original `"photoTakenTime"` and GPS coordinates, injecting them strictly and safely back into the EXIF/QuickTime headers of your `.jpg`, `.heic`, and `.mp4` files using a multi-threaded ExifTool pool. 
-- **Smart Deduplication**: Aggressively scans your NAS destination and builds a highly efficient `{size: hash}` manifest chunk. If you re-run an ingestion later, it knows *exactly* which files have already been pushed, saving you gigabytes of redundant transfers.
-- **Auto-Unzipping & Folder Merging**: Safely and recursively extracts every `.zip` archive you get from Takeout, brilliantly stitching together collision folders without skipping healthy files.
-- **Pristine Library Structure**: Automatically evaluates the true UTC dates and moves your media to an elegant, tidy `{NAS_ROOT}/YYYY/MM/final_image.jpg` hierarchy.
+- **Sidecar Re-Injection**: Parses disconnected `.json` sidecars to discover original `"photoTakenTime"` and GPS coordinates, injecting them safely back into the EXIF/QuickTime headers of `.jpg`, `.heic`, and `.mp4` files using a multi-threaded ExifTool pool.
+- **Smart Deduplication**: Scans your target destination and builds an efficient `{size: hash}` manifest. When re-running an ingestion, it knows which files have already been transferred to prevent redundant copies.
+- **Auto-Unzipping & Folder Merging**: Recursively extracts `.zip` archives from Takeout, safely stitching together collision folders without skipping healthy files.
+- **Clean Library Structure**: Evaluates true UTC dates and moves your media to an organized `{NAS_ROOT}/YYYY/MM/final_image.jpg` hierarchy.
 - **NAS SMB Safe-Copying**: Bypasses classic macOS `shutil.copy2` extended attribute bugs (Errno 22) during network transfers, manually preserving `mtime` strictly via safe `os.utime()` injections.
 - **rclone Support**: If your Takeout exports were sent directly to Google Drive, this script can use `rclone` to automatically stream the download chunks locally.
 
@@ -21,9 +21,16 @@ This tool intelligently reconstructs your exact library from the ground up, fixi
 
 ## Getting Started
 
-### 1. Installation
+### 1. Prerequisites
 
-Clone the repository and let the friendly onboarding wizard configure your environment!
+Before installing the script, ensure you have the following ready:
+1. **Google Takeout Files**: Request and download your Google Photos export from Google Takeout to a local folder on your computer (e.g., `~/Downloads/GoogleTakeout`).
+2. **Target Storage**: Make sure your NAS or external storage is mounted and accessible from your machine (e.g., `/Volumes/photo`).
+3. **ExifTool**: Ensure ExifTool is installed on your system.
+
+### 2. Installation
+
+Clone the repository and run the setup wizard to configure your environment:
 
 ```bash
 git clone https://github.com/yourusername/GoogleTakeoutToNAS.git
@@ -31,12 +38,12 @@ cd GoogleTakeoutToNAS
 python3 setup.py
 ```
 
-The interactive `setup.py` wizard will completely automate your deployment:
-1. **Dependency Check**: It will verify you have ExifTool installed (and tell you exactly how to get it if you don't).
-2. **Package Install**: It will automatically install the required Python wrappers (`pyexiftool`, `tqdm`).
-3. **Environment Interview**: It will cleanly prompt you for your Local and NAS filesystem paths.
-4. **Pre-Flight Check**: It will actively verify read/write connections to your drives before you start.
-5. **Launcher Generation**: It will generate a localized `go.sh` (Mac/Linux) or `go.bat` (Windows) file that completely abstracts away the complex command-line arguments.
+The `setup.py` wizard will help you configure your deployment:
+1. **Dependency Check**: Verifies ExifTool is available.
+2. **Package Install**: Installs required Python wrappers (`pyexiftool`, `tqdm`).
+3. **Environment setup**: Prompts you for your Local and NAS filesystem paths.
+4. **Pre-Flight Check**: Verifies read/write connections to your paths.
+5. **Launcher Generation**: Generates a local `go.sh` (Mac/Linux) or `go.bat` (Windows) wrapper script that abstracts away the command-line arguments.
 
 *(Note: If you plan to pull archives using `rclone` instead of local downloads, ensure it is installed on your OS as well).*
 
@@ -100,7 +107,7 @@ You can natively adjust the behavior using `config.py`.
 ## Troubleshooting
 
 **`execute returned a non-zero exit status: 1`**
-If ExifTool spits out errors on certain files (like older `.avi` files, or odd `.png` screenshots), don't panic! Some files structurally cannot accept EXIF tags. The library Organizer logic has been heavily fortified to safely catch these errors, log them, and still migrate the files cleanly to the NAS using sidecar metadata dates instead!
+If ExifTool reports errors on certain files (like older `.avi` files, or some `.png` formats), the script will catch the error, log it, and still migrate the files to the target using sidecar metadata dates.
 
 **SMB Drops / Notebook Sleeping**
 To circumvent your Mac sleeping and dropping the NAS mount mid-transfer, either run using `caffeinate -i ./go.sh`, or use a tool like Amphetamine to keep your Mac awake!
@@ -114,6 +121,6 @@ Go to **System Settings → Privacy & Security → Full Disk Access** and explic
 
 When you run the script, you specify a `--work-dir` (e.g. `~/Desktop/takeout_work`) to act as a temporary playground. 
 
-**Auto-Cleaning Workspace**: Once your extraction is 100% migrated to your NAS, the script mathematically verifies your remaining local duplicates, safely unlinks them, and entirely disintegrates the `takeout_work` folder so it doesn't take up space in your life.
+**Auto-Cleaning Workspace**: Once your extraction is entirely migrated to your target storage, the script verifies your remaining local duplicates, unlinks them, and removes the empty `takeout_work` folder to clean up local space.
 
-**Permanent Receipts**: Every time you completely run the engine, it will generate a permanent receipt of everything it processed, deduplicated, and analyzed (identifying time-span gaps). These are saved completely out of harms way inside your codebase folder under `TakeouttoNAS/`.
+**Run Reports**: Every time you run the engine, it will generate a summary receipt of everything it processed, deduplicated, and analyzed (including timeline gaps). These are saved in your codebase folder under `TakeouttoNAS/`.

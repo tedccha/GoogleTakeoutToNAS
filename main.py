@@ -3,8 +3,8 @@
 GoogleTakeoutToNAS
 ==============================
 Automates the migration of a Google Photos library (exported via Google
-Takeout) to a Synology NAS, with metadata injection, deduplication, and
-a clean Year/Month folder hierarchy.
+Takeout) to a NAS, local drive, or network storage with metadata injection,
+deduplication, and a clean Year/Month folder hierarchy.
 
 Usage examples
 --------------
@@ -63,7 +63,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="GoogleTakeoutToNAS",
         description=(
-            "Migrate Google Takeout photos/videos to a Synology NAS with "
+            "Migrate Google Takeout photos/videos to a NAS (e.g. Synology, "
+            "QNAP, TrueNAS, Unraid, or any local drive) with "
             "metadata injection, deduplication, and Year/Month organisation."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -113,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
         help=(
-            "Root of the Synology photo library mount point "
+            "Root of the NAS or photo library mount point "
             "(e.g. /Volumes/photo or /Volumes/photo/PhotoLibrary)."
         ),
     )
@@ -208,7 +209,7 @@ def _validate_args(args: argparse.Namespace) -> None:
     if not args.dry_run and not args.nas.is_dir():
         _die(
             f"NAS directory not found: {args.nas}\n"
-            "Make sure the Synology volume is mounted (Finder → Go → Connect to Server)."
+            "Make sure your network volume is mounted (e.g., Finder → Go → Connect to Server)."
         )
 
     # Apple Silicon path advice

@@ -2,11 +2,11 @@
 """
 setup.py - GoogleTakeoutToNAS Onboarding Wizard
 ------------------------------------------------------------
-A friendly wizard to help new users:
+A setup wizard to help new users:
 1. Verify ExifTool is installed.
 2. Ensure python dependencies are installed.
-3. Interview the user for their exact paths.
-4. Verify connections to the NAS and Source directories.
+3. Prompt the user for their exact paths.
+4. Verify connections to the Target storage and Source directories.
 5. Auto-generate the correct execution scripts (go.sh / go.bat).
 """
 
@@ -45,7 +45,7 @@ def check_exiftool():
             print("To install on Linux:")
             print("  sudo apt install libimage-exiftool-perl")
             
-        print("\nPlease install ExifTool and run python setup.py again!")
+        print("\nPlease install ExifTool and run python setup.py again.")
         sys.exit(1)
     
     print("[SUCCESS] ExifTool is installed and ready.")
@@ -77,7 +77,7 @@ def check_dependencies():
 
 def get_paths() -> tuple[Path, Path, Path]:
     """Interview the user to get their paths."""
-    _print_header("3. Setup Your Transfer Paths")
+    _print_header("3. Setup Transfer Paths")
     print("Press [Enter] to accept the defaults, or type in a new path.\n")
     
     system = platform.system()
@@ -95,7 +95,7 @@ def get_paths() -> tuple[Path, Path, Path]:
         
     source_input = input(f"Source Directory (Google Takeout Zips) [{def_src}]: ").strip()
     work_input   = input(f"Temporary Working Directory [{def_work}]: ").strip()
-    nas_input    = input(f"NAS Destination Volume [{def_nas}]: ").strip()
+    nas_input    = input(f"Target Destination Volume [{def_nas}]: ").strip()
     
     src  = Path(source_input).expanduser().resolve() if source_input else def_src
     work = Path(work_input).expanduser().resolve() if work_input else def_work
@@ -127,23 +127,23 @@ def pre_flight_check(src: Path, work: Path, nas: Path):
         print(f"  [X] Cannot write to Work directory {work}: {e}")
         errors = True
         
-    print("Testing NAS Storage Connection...")
+    print("Testing Target Storage Connection...")
     if nas.exists() and nas.is_dir():
         try:
             test_file = nas / ".write_test"
             test_file.touch()
             test_file.unlink()
-            print("  [✓] NAS is strictly read/write accessible.")
+            print("  [✓] Target storage is read/write accessible.")
         except Exception as e:
-            print(f"  [X] NAS exists but cannot be written to {nas}: {e}")
+            print(f"  [X] Target storage exists but cannot be written to {nas}: {e}")
             errors = True
     else:
-        print(f"  [X] NAS mount missing or disconnected: {nas}")
-        print("      Check your file manager to ensure the drive map is strictly mounted.")
+        print(f"  [X] Target mount missing or disconnected: {nas}")
+        print("      Check your file manager to ensure the drive map is mounted.")
         errors = True
         
     if errors:
-        print("\n[!] Pre-Flight checks failed! Please correct the errors above and run setup.py again.")
+        print("\n[!] Pre-Flight checks failed. Please correct the errors above and run setup.py again.")
         sys.exit(1)
         
 
@@ -180,11 +180,11 @@ python3 main.py --source "{src}" --work-dir "{work}" --nas "{nas}" "$@"
         # Make executable
         os.chmod(script_name, 0o755)
         
-    print(f"[SUCCESS] Created customized `{script_name}`.")
+    print(f"[SUCCESS] Created local runner `{script_name}`.")
     print("\n" + "=" * 60)
-    print("🚀 SETUP COMPLETE!")
+    print(" SETUP COMPLETE")
     print("=" * 60)
-    print(f"\nWhenever you are ready to begin transferring, simply type:")
+    print(f"\nWhenever you are ready to begin transferring, run:")
     if system == "Windows":
         print(f"   {script_name}")
     else:
