@@ -24,9 +24,9 @@ This tool reconstructs your library by fixing metadata, handling deduplication, 
 ### 1. Prerequisites
 
 Before installing the script, ensure you have the following ready:
-1. **Google Takeout Files**: Request and download your Google Photos export from Google Takeout to a local folder on your computer (e.g., `~/Downloads/GoogleTakeout`).
+1. **Google Takeout Files**: Request and download your Google Photos export from [Google Takeout](https://takeout.google.com/) to a local folder on your computer (e.g., `~/Downloads/GoogleTakeout`).
 2. **Target Storage**: Make sure your NAS or external storage is mounted and accessible from your machine (e.g., `/Volumes/photo`).
-3. **ExifTool**: Ensure ExifTool is installed on your system.
+3. **ExifTool**: Ensure [ExifTool](https://exiftool.org/) is installed on your system. *(If you don't have it installed yet, don't worry—the `setup.py` wizard will explicitly provide the correct terminal command or download link to install it based on your specific operating system).*
 
 ### 2. Installation
 
